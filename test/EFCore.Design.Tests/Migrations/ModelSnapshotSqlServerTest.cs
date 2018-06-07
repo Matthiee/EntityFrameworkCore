@@ -702,9 +702,16 @@ builder.Entity(""Microsoft.EntityFrameworkCore.Migrations.ModelSnapshotSqlServer
                     });
         }
 
-        [Fact]
-        public virtual void Weak_owned_types_are_stored_in_snapshot()
+        [Theory]
+        [InlineData(false)]
+        [InlineData(true)]
+        public virtual void Weak_owned_types_are_stored_in_snapshot(bool useOldBehavior)
         {
+            if (useOldBehavior)
+            {
+                AppContext.SetSwitch("Microsoft.EntityFrameworkCore.Issue12107", true);
+            }
+
             Test(
                 builder =>
                 {
@@ -843,7 +850,7 @@ builder.Entity(""Microsoft.EntityFrameworkCore.Migrations.ModelSnapshotSqlServer
                     Assert.Equal(1, orderBillingDetails.PropertyCount());
 
                     var orderBillingDetailsAddress = orderBillingDetails.FindNavigation(nameof(OrderDetails.StreetAddress)).GetTargetType();
-                    Assert.Equal(2, orderBillingDetailsAddress.PropertyCount());
+                    Assert.Equal(useOldBehavior ? 3 : 2, orderBillingDetailsAddress.PropertyCount());
 
                     var orderShippingDetails = order.FindNavigation(nameof(Order.OrderShippingDetails)).GetTargetType();
                     Assert.Equal(1, orderShippingDetails.PropertyCount());
@@ -851,6 +858,11 @@ builder.Entity(""Microsoft.EntityFrameworkCore.Migrations.ModelSnapshotSqlServer
                     var orderShippingDetailsAddress = orderShippingDetails.FindNavigation(nameof(OrderDetails.StreetAddress)).GetTargetType();
                     Assert.Equal(2, orderShippingDetailsAddress.PropertyCount());
                 });
+
+            if (useOldBehavior)
+            {
+                AppContext.SetSwitch("Microsoft.EntityFrameworkCore.Issue12107", false);
+            }
         }
 
         private class Order

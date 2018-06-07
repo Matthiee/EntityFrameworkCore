@@ -2530,6 +2530,9 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Internal
                 return null;
             }
 
+            var use20Behaviour = AppContext.TryGetSwitch("Microsoft.EntityFrameworkCore.Issue12107", out var isEnabled)
+                                 && isEnabled;
+
             var actualProperties = new Property[properties.Count];
             for (var i = 0; i < actualProperties.Length; i++)
             {
@@ -2538,12 +2541,16 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Internal
                 var builder = property.Builder != null && property.DeclaringEntityType.IsAssignableFrom(Metadata)
                     ? property.Builder
                     : Metadata.FindProperty(property.Name)?.Builder
-                      ?? Property(
-                          property.Name,
-                          typeConfigurationSource.HasValue ? property.ClrType : null,
-                          property.GetIdentifyingMemberInfo(),
-                          configurationSource,
-                          typeConfigurationSource);
+                      ?? (use20Behaviour
+                          ? (property.IsShadowProperty
+                              ? null
+                              : Property(property.Name, property.ClrType, property.GetIdentifyingMemberInfo(), configurationSource, property.GetTypeConfigurationSource()))
+                          : Property(
+                              property.Name,
+                              typeConfigurationSource.HasValue ? property.ClrType : null,
+                              property.GetIdentifyingMemberInfo(),
+                              configurationSource,
+                              typeConfigurationSource));
                 if (builder == null)
                 {
                     return null;
