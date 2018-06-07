@@ -2778,7 +2778,7 @@ namespace Microsoft.EntityFrameworkCore.Metadata.Internal
             IReadOnlyList<Property> dependentProperties = null;
             if (Metadata.GetForeignKeyPropertiesConfigurationSource()?.Overrides(configurationSource) == true)
             {
-                dependentProperties = dependentEntityTypeBuilder.GetActualProperties(Metadata.Properties, configurationSource: null)
+                dependentProperties = dependentEntityTypeBuilder.GetActualProperties(Metadata.Properties, configurationSource: configurationSource)
                                       ?? new List<Property>();
             }
 
